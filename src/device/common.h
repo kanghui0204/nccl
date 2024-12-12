@@ -363,8 +363,20 @@ __device__ __forceinline__ void ncclKernelMain(struct ncclDevKernelArgs const* a
     // ncclShmem.workConsumed written by loadWorkBatchToShmem before __syncthreads()
     ncclShmem.comm.workConsumed[ncclShmem.channelId] = ncclShmem.workConsumed;
   }
-
+  int currBatchIx = blockIdx.x;
   while (true) {
+    if (tid == 0) {
+      uint32_t key(0);
+      struct ncclDevWorkBatch *pBatch = ((struct ncclDevWorkBatch*)(args+1)) + currBatchIx;
+      switch (pBatch->workType) {
+        case (int)ncclDevWorkTypeColl:
+          key = ((struct ncclDevWorkColl *)&ncclShmem.workStorage)->key;
+        case (int)ncclDevWorkTypeCollReg:
+          key = ((struct ncclDevWorkCollReg *)&ncclShmem.workStorage)->coll.key;
+      }
+      // printf("AA03, in kernel func, batch.workType:%d, key:%d\n", pBatch->workType, key);
+      if (key > 0) *ncclShmem.comm.hostKeyPtr = key;
+    }
     if (0 <= SpecializedFnId && ncclShmem.funcId == (unsigned)SpecializedFnId) {
       SpecializedRunWorkBatch().run();
     } else {
@@ -373,6 +385,7 @@ __device__ __forceinline__ void ncclKernelMain(struct ncclDevKernelArgs const* a
 
     if (ncclShmem.nextBatchIx == -1) break;
     int batchIx = ncclShmem.nextBatchIx;
+    currBatchIx = batchIx;
     __syncthreads();
     loadWorkBatchToShmem(tid, tn, args, batchIx);
 

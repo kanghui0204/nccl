@@ -74,9 +74,9 @@ const char* ncclProtoToString(int proto) {
 }
 
 NCCL_API(ncclResult_t, ncclAllGather, const void* sendbuff, void* recvbuff, size_t sendcount,
-    ncclDataType_t datatype, ncclComm_t comm, cudaStream_t stream);
+    ncclDataType_t datatype, ncclComm_t comm, cudaStream_t stream, uint32_t key);
 ncclResult_t ncclAllGather(const void* sendbuff, void* recvbuff, size_t sendcount,
-    ncclDataType_t datatype, ncclComm_t comm, cudaStream_t stream) {
+    ncclDataType_t datatype, ncclComm_t comm, cudaStream_t stream, uint32_t key) {
   // Just pass the size of one message and not the total bytes sent/received.
   constexpr nvtxPayloadSchemaEntry_t AllGatherSchema[] = {
     {0, NVTX_PAYLOAD_ENTRY_TYPE_SIZE, "Message size [bytes]"}
@@ -86,15 +86,15 @@ ncclResult_t ncclAllGather(const void* sendbuff, void* recvbuff, size_t sendcoun
 
   struct ncclInfo info = { ncclFuncAllGather, "AllGather",
     sendbuff, recvbuff, sendcount, datatype, ncclSum, 0, comm, stream, /* Args */
-    ALLGATHER_CHUNKSTEPS, ALLGATHER_SLICESTEPS };
+    ALLGATHER_CHUNKSTEPS, ALLGATHER_SLICESTEPS, key};
   NCCLCHECK(ncclEnqueueCheck(&info));
   return ncclSuccess;
 }
 
 NCCL_API(ncclResult_t, ncclAllReduce, const void* sendbuff, void* recvbuff, size_t count,
-    ncclDataType_t datatype, ncclRedOp_t op, ncclComm* comm, cudaStream_t stream);
+    ncclDataType_t datatype, ncclRedOp_t op, ncclComm* comm, cudaStream_t stream, uint32_t key);
 ncclResult_t ncclAllReduce(const void* sendbuff, void* recvbuff, size_t count,
-    ncclDataType_t datatype, ncclRedOp_t op, ncclComm* comm, cudaStream_t stream) {
+    ncclDataType_t datatype, ncclRedOp_t op, ncclComm* comm, cudaStream_t stream, uint32_t key) {
   struct NvtxParamsAllReduce {
     size_t bytes;
     ncclRedOp_t op;
@@ -110,7 +110,7 @@ ncclResult_t ncclAllReduce(const void* sendbuff, void* recvbuff, size_t count,
 
   struct ncclInfo info = { ncclFuncAllReduce, "AllReduce",
     sendbuff, recvbuff, count, datatype, op, 0, comm, stream, /* Args */
-    ALLREDUCE_CHUNKSTEPS, ALLREDUCE_SLICESTEPS };
+    ALLREDUCE_CHUNKSTEPS, ALLREDUCE_SLICESTEPS, key};
   NCCLCHECK(ncclEnqueueCheck(&info));
   return ncclSuccess;
 }
@@ -171,9 +171,9 @@ ncclResult_t ncclReduce(const void* sendbuff, void* recvbuff, size_t count,
 }
 
 NCCL_API(ncclResult_t, ncclReduceScatter, const void* sendbuff, void* recvbuff, size_t recvcount,
-    ncclDataType_t datatype, ncclRedOp_t op, ncclComm* comm, cudaStream_t stream);
+    ncclDataType_t datatype, ncclRedOp_t op, ncclComm* comm, cudaStream_t stream, uint32_t key);
 ncclResult_t ncclReduceScatter(const void* sendbuff, void* recvbuff, size_t recvcount,
-    ncclDataType_t datatype, ncclRedOp_t op, ncclComm* comm, cudaStream_t stream) {
+    ncclDataType_t datatype, ncclRedOp_t op, ncclComm* comm, cudaStream_t stream, uint32_t key) {
   struct NvtxParamsReduceScatter {
     size_t bytes;
     ncclRedOp_t op;
@@ -188,7 +188,7 @@ ncclResult_t ncclReduceScatter(const void* sendbuff, void* recvbuff, size_t recv
 
   struct ncclInfo info = { ncclFuncReduceScatter, "ReduceScatter",
     sendbuff, recvbuff, recvcount, datatype, op, 0, comm, stream, /* Args */
-    REDUCESCATTER_CHUNKSTEPS, REDUCESCATTER_SLICESTEPS };
+    REDUCESCATTER_CHUNKSTEPS, REDUCESCATTER_SLICESTEPS, key};
   NCCLCHECK(ncclEnqueueCheck(&info));
   return ncclSuccess;
 }

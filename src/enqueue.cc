@@ -675,6 +675,7 @@ ncclResult_t ncclPrepareTasks(struct ncclComm* comm, bool* algoNeedConnect, bool
     devWork.redOpArgIsPtr = task->opDev.scalarArgIsPtr;
     devWork.oneNode = (comm->nNodes == 1);
     devWork.regUsed = task->regBufType;
+    devWork.key = task->key;
 
     struct ncclWorkList* workNode;
     switch (task->regBufType) {
@@ -2222,6 +2223,7 @@ static ncclResult_t taskAppend(struct ncclComm* comm, struct ncclInfo* info) {
     p2p->datatype = info->datatype;
     p2p->root = info->root;
     p2p->bytes = nBytes;
+    p2p->key = info->key;
     ncclIntruQueueEnqueue(
       isSendNotRecv ? &planner->peers[peer].sendQueue : &planner->peers[peer].recvQueue,
       p2p);
@@ -2286,7 +2288,7 @@ static ncclResult_t taskAppend(struct ncclComm* comm, struct ncclInfo* info) {
       t->opDev = opDev; // C++ struct assignment
       t->chunkSteps = info->chunkSteps;
       t->sliceSteps = info->sliceSteps;
-
+      t->key = info->key;
       planner->nTasksColl += 1;
       ncclTaskCollSorterInsert(&planner->collSorter, t, t->trafficBytes);
     }
@@ -2334,9 +2336,10 @@ ncclResult_t ncclEnqueueCheck(struct ncclInfo* info) {
   }
   NCCLCHECKGOTO(ArgsCheck(info), ret, fail);
 
-  INFO(NCCL_COLL,"%s: opCount %lx sendbuff %p recvbuff %p count %zu datatype %d op %d root %d comm %p [nranks=%d] stream %p",
-        info->opName, info->comm->opCount, info->sendbuff, info->recvbuff, info->count,
-        info->datatype, info->op, info->root, info->comm, info->comm->nRanks, info->stream);
+  INFO(NCCL_COLL,"%s: opCount %lx sendbuff %p recvbuff %p count %zu "
+       "datatype %d op %d root %d comm %p [nranks=%d] stream %p key %u",
+       info->opName, info->comm->opCount, info->sendbuff, info->recvbuff, info->count, info->datatype,
+       info->op, info->root, info->comm, info->comm->nRanks, info->stream, info->key);
   TRACE_CALL("nccl%s(%" PRIx64 ",%" PRIx64 ",%zu,%d,%d,%d,%p,%p)", info->opName, reinterpret_cast<int64_t>(info->sendbuff), reinterpret_cast<int64_t>(info->recvbuff), info->count, info->datatype, info->op, info->root, info->comm, info->stream);
 
   NCCLCHECKGOTO(taskAppend(info->comm, info), ret, fail);

@@ -7,6 +7,7 @@
 #ifndef NCCL_H_
 #define NCCL_H_
 
+#include <stdint.h>
 #include <cuda_runtime.h>
 #include <cuda_fp16.h>
 #if CUDART_VERSION >= 11000
@@ -344,9 +345,9 @@ ncclResult_t pncclBroadcast(const void* sendbuff, void* recvbuff, size_t count, 
  * In-place operation will happen if sendbuff == recvbuff.
  */
 ncclResult_t  ncclAllReduce(const void* sendbuff, void* recvbuff, size_t count,
-    ncclDataType_t datatype, ncclRedOp_t op, ncclComm_t comm, cudaStream_t stream);
+    ncclDataType_t datatype, ncclRedOp_t op, ncclComm_t comm, cudaStream_t stream, uint32_t key=0);
 ncclResult_t pncclAllReduce(const void* sendbuff, void* recvbuff, size_t count,
-    ncclDataType_t datatype, ncclRedOp_t op, ncclComm_t comm, cudaStream_t stream);
+    ncclDataType_t datatype, ncclRedOp_t op, ncclComm_t comm, cudaStream_t stream, uint32_t key=0);
 
 /*
  * Reduce-Scatter
@@ -361,10 +362,10 @@ ncclResult_t pncclAllReduce(const void* sendbuff, void* recvbuff, size_t count,
  */
 ncclResult_t  ncclReduceScatter(const void* sendbuff, void* recvbuff,
     size_t recvcount, ncclDataType_t datatype, ncclRedOp_t op, ncclComm_t comm,
-    cudaStream_t stream);
+    cudaStream_t stream, uint32_t key=0);
 ncclResult_t pncclReduceScatter(const void* sendbuff, void* recvbuff,
     size_t recvcount, ncclDataType_t datatype, ncclRedOp_t op, ncclComm_t comm,
-    cudaStream_t stream);
+    cudaStream_t stream, uint32_t key=0);
 
 /*
  * All-Gather
@@ -377,9 +378,9 @@ ncclResult_t pncclReduceScatter(const void* sendbuff, void* recvbuff,
  * In-place operations will happen if sendbuff == recvbuff + rank * sendcount.
  */
 ncclResult_t  ncclAllGather(const void* sendbuff, void* recvbuff, size_t sendcount,
-    ncclDataType_t datatype, ncclComm_t comm, cudaStream_t stream);
+    ncclDataType_t datatype, ncclComm_t comm, cudaStream_t stream, uint32_t key=0);
 ncclResult_t pncclAllGather(const void* sendbuff, void* recvbuff, size_t sendcount,
-    ncclDataType_t datatype, ncclComm_t comm, cudaStream_t stream);
+    ncclDataType_t datatype, ncclComm_t comm, cudaStream_t stream, uint32_t key=0);
 
 /*
  * Send
@@ -465,6 +466,8 @@ ncclResult_t pncclGroupEnd();
 ncclResult_t  ncclGroupSimulateEnd(ncclSimInfo_t* simInfo);
 ncclResult_t pncclGroupSimulateEnd(ncclSimInfo_t* simInfo);
 
+ncclResult_t ncclPrintKey(ncclComm_t comm);
+ncclResult_t pncclPrintKey(ncclComm_t comm);
 #ifdef __cplusplus
 } // end extern "C"
 #endif

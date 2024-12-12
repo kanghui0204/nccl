@@ -208,7 +208,7 @@ struct ncclTaskColl {
   uintptr_t recvbuffOffset;
   uintptr_t* sendbuffRmtAddrs;
   uintptr_t* recvbuffRmtAddrs;
-
+  uint32_t key;
   // Profiler plugin
   int eActivationMask;
   void* eventHandle;
@@ -221,7 +221,7 @@ struct ncclTaskP2p {
   ncclDataType_t datatype;
   int root;
   size_t bytes;
-
+  uint32_t key;
   // Profiler plugin
   int eActivationMask;
   void* eventHandle;
@@ -600,6 +600,7 @@ struct ncclComm {
   // buffer registration cache
   struct ncclRegCache regCache;
   uint64_t endMagic;
+  uint32_t *hostKeyPtr;
 };
 
 enum ncclLaunchMode {

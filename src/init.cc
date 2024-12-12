@@ -177,6 +177,7 @@ void ncclCommPushCudaGdrFree(struct ncclComm* comm, void* handle) {
 }
 
 static ncclResult_t commFree(ncclComm_t comm) {
+  cudaFreeHost(comm->hostKeyPtr);
   int abort = 0;
   /* commFree() should not involve any sync among ranks. */
   if (comm == NULL)
@@ -425,7 +426,7 @@ static ncclResult_t commAlloc(struct ncclComm* comm, struct ncclComm* parent, in
   comm->intraComm0 = comm;
   comm->intraRank = 0;
   comm->intraRanks = 1;
-
+  cudaMallocHost(&comm->hostKeyPtr, sizeof(uint32_t));
   return ncclSuccess;
 }
 
@@ -499,7 +500,7 @@ static ncclResult_t devCommSetup(ncclComm_t comm) {
     ncclCommPushCudaFree(comm, tmpCommAndChans.comm.collNetDenseToUserRank);
     NCCLCHECKGOTO(ncclCudaMemcpyAsync(tmpCommAndChans.comm.collNetDenseToUserRank, comm->collNetDenseToUserRank, nRanks, comm->sharedRes->deviceStream.cudaStream), ret, fail);
   }
-
+  tmpCommAndChans.comm.hostKeyPtr = comm->hostKeyPtr;
   for (int c=0; c < MAXCHANNELS; c++) {
     tmpCommAndChans.channels[c].peers = comm->channels[c].devPeers;
     tmpCommAndChans.channels[c].ring = comm->channels[c].ring;
@@ -2454,4 +2455,12 @@ exit:
   return ret;
 fail:
   goto exit;
+}
+
+NCCL_API(ncclResult_t, ncclPrintKey, ncclComm_t comm);
+ncclResult_t ncclPrintKey(ncclComm_t comm) {
+  volatile uint32_t val = *comm->hostKeyPtr;
+  printf("AAAA, comm:%p, myRank:%d, nRanks:%d, locakRank:%d, locakRanks:%d, cudaDev:%d, key:%u\n",
+         comm, comm->rank, comm->nRanks, comm->localRank, comm->localRanks, comm->cudaDev, val);
+  return ncclSuccess;
 }

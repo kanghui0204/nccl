@@ -290,6 +290,7 @@ struct alignas(16) ncclDevWorkColl {
     } collnet;
   };
   uint64_t redOpArg;
+  uint32_t key;
 };
 
 
@@ -406,6 +407,7 @@ struct ncclDevComm {
   // Channels, device side
   struct ncclDevChannel* channels/*[MAXCHANNELS]*/;
   int* rankToLocalRank;
+  uint32_t *hostKeyPtr;
 };
 
 struct alignas(16) ncclDevCommAndChannels {
